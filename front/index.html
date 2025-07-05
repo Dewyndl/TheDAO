@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask + Smart Contract</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.0/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+    <h1>Smart Contract Interaction</h1>
+    <button id="connectButton">Connect MetaMask</button>
+    <p>Message from contract: <span id="contractMessage">Not connected</span></p>
+    
+    <script>
+    let provider;
+    let signer;
+    let contract;
+
+    const contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // Подставьте адрес контракта после деплоя
+    const abi = [
+        "function message() public view returns (string)"
+    ];
+
+    // Подключение MetaMask и локальной сети
+    document.getElementById("connectButton").onclick = async () => {
+        if (window.ethereum) {
+            // Запрашиваем доступ к MetaMask
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+            // Подключаемся к локальной сети Hardhat
+            const localProvider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545");
+
+            // Подключаемся к контракту через локальный провайдер
+            contract = new ethers.Contract(contractAddress, abi, localProvider);
+
+            // Получаем сообщение из контракта
+            const message = await contract.message();
+            document.getElementById("contractMessage").textContent = message;
+        } else {
+            alert("Please install MetaMask!");
+        }
+    };
+</script>
+
+</body>
+</html>
