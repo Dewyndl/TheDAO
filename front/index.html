@@ -7,26 +7,51 @@
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.0/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-    <h1>Smart Contract Interaction</h1>
-    <button id="connectButton">Connect MetaMask</button>
-    <p>Message from contract: <span id="contractMessage">Not connected</span></p>
-    
+    <h1>The DAO</h1>
+    <button id="connectButton">Connect MetaMask wallet</button>
+    <p><span id="accountStatus">Account is not connected</span></p>
+    <p><span id="contractMessage"></span></p>
+    <button id="getMembersButton">Get members of The DAO</button>
+    <button id="getMessage">Get message</button>
+    <div id="daoPanel" style="display: none;">
+    <h4>Панель управления DAO</h4>
+    <div id="daoInformations"></div>
+    <div id="actions">
+        <div id="inputContainer">
+            <input type="text" id="inputElement">
+        </div>
+        <button id="addUserButton">Добавить пользователя</button>
+        <button id="removeUserButton">Удалить пользователя</button>
+    </div>
+    </div>
     <script>
     let provider;
     let signer;
     let contract;
-
-    const contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // Подставьте адрес контракта после деплоя
+    async function getDaoMembers() {
+        const membersAmount = await contract.getMembersAmount()
+        let members = []
+        for (let i = 0; i < membersAmount; i++) {
+            let member = await contract.members(i)
+            members.push(member)
+        }
+        return members
+    }
+    const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Подставьте адрес контракта после деплоя
     const abi = [
-        "function message() public view returns (string)"
+        "function message() public view returns (string)",
+        "function members(uint256) public view returns (address)",
+        "function getMembersAmount() public view returns (uint)"
     ];
 
     // Подключение MetaMask и локальной сети
     document.getElementById("connectButton").onclick = async () => {
+        console.log("Connecting metamask")
         if (window.ethereum) {
             // Запрашиваем доступ к MetaMask
             provider = new ethers.providers.Web3Provider(window.ethereum);
             signer = provider.getSigner();
+            let address = await signer.getAddress();
             await window.ethereum.request({ method: 'eth_requestAccounts' });
 
             // Подключаемся к локальной сети Hardhat
@@ -37,11 +62,37 @@
 
             // Получаем сообщение из контракта
             const message = await contract.message();
-            document.getElementById("contractMessage").textContent = message;
+            document.getElementById("accountStatus").textContent = `Account connected: ${address}`;
+            let members = await getDaoMembers()
+            if (members.includes(address)) {
+                document.getElementById("daoPanel").style.display = "block"
+            }
         } else {
             alert("Please install MetaMask!");
         }
     };
+
+    document.getElementById("getMembersButton").onclick = async () => {
+        console.log("Getting members of The DAO")
+        let message = "Members of the dao:"
+        members = await getDaoMembers()
+        for (let i = 0; i < members.length; i++) {
+            message += `${i+1}. ${members[i]}\n`
+        }
+        document.getElementById("contractMessage").textContent = message
+
+    }
+
+    document.getElementById("getMessage").onclick = async () => {
+        console.log("Getting message")
+        const message = await contract.message();
+        document.getElementById("contractMessage").textContent = `Message: ${message}`;
+    }
+
+    document.getElementById("addUserButton").onclick = async () => {
+        const inputElement = document.getElementById("inputElement")
+        
+    }
 </script>
 
 </body>
