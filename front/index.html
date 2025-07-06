@@ -23,6 +23,9 @@
         <button id="addUserButton">Добавить пользователя</button>
         <button id="removeUserButton">Удалить пользователя</button>
     </div>
+    <div><h4>Голосования</h4>
+    <p id="votesText"></p>
+    </div>
     </div>
     <script>
     let provider;
@@ -37,11 +40,34 @@
         }
         return members
     }
-    const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Подставьте адрес контракта после деплоя
+
+    async function getVotings() {
+        let message = ""
+        const votingAmount = await contract.getVotingsAmount()
+        for (let i = 0; i < votingAmount; i++) {
+            votingId = await contract.votingIds(i)
+            voting = await contract.votings
+            console.log(voting)
+            let partMessage
+            if (voting.actionType == 0) {
+                partMessage = "Добавление пользователя"
+            }
+            message += `${i+1}. Голосование "${partMessage}"`
+            i++
+        }
+        const votesText = document.getElementById("votesText")
+        votesText.textContent = message
+    }
+
+    const contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // Подставьте адрес контракта после деплоя
     const abi = [
         "function message() public view returns (string)",
         "function members(uint256) public view returns (address)",
-        "function getMembersAmount() public view returns (uint)"
+        "function getMembersAmount() public view returns (uint)",
+        "function getVotingsAmount() public view returns (uint)",
+        "function votingIds(uint256) public view returns (uint)",
+        "function votings(uint) public view returns (Voting)",
+        "function createVoting(uint8, address)"
     ];
 
     // Подключение MetaMask и локальной сети
@@ -60,13 +86,14 @@
             // Подключаемся к контракту через локальный провайдер
             contract = new ethers.Contract(contractAddress, abi, localProvider);
 
-            // Получаем сообщение из контракта
-            const message = await contract.message();
             document.getElementById("accountStatus").textContent = `Account connected: ${address}`;
             let members = await getDaoMembers()
             if (members.includes(address)) {
                 document.getElementById("daoPanel").style.display = "block"
+                await getVotings()
             }
+
+            await getVotings();
         } else {
             alert("Please install MetaMask!");
         }
@@ -91,7 +118,12 @@
 
     document.getElementById("addUserButton").onclick = async () => {
         const inputElement = document.getElementById("inputElement")
-        
+        const userAddress = inputElement.value;
+        const contractWithSigner = contract.connect(signer);
+        const tx = await contractWithSigner.createVoting(0, userAddress);
+        await tx.wait();
+        await getVotings();
+        console.log(userAddress);
     }
 </script>
 

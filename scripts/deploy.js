@@ -2,8 +2,15 @@ const { ethers } = require("hardhat")
 
 async function main(params) {
 
-    const TheDAO = await ethers.getContractFactory("TheDAO")
-    const theDao = await TheDAO.deploy()
+    const AdditionalLibrary = await ethers.getContractFactory("ArraysPlus");
+    const additionalLibrary = await AdditionalLibrary.deploy()
+
+    const TheDAO = await ethers.getContractFactory("TheDAO", {
+        libraries: {
+            ArraysPlus: additionalLibrary.target,
+        }
+    })
+    const theDao = await TheDAO.deploy(1000)
     console.log("Contract deployed to:", theDao.target);
 
 }

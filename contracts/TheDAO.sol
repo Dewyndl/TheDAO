@@ -1,18 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-library ArraysPlus {
-    function removeByValue(address[] storage array, address _target) public {
-        for (uint i= 0; i<array.length; i++) {
-            if (_target==array[i]) {
-                array[i] = array[array.length-1];
-                array.pop();
-            }
-        }
-    }
-}
-
 import "./VoteToken.sol";
+import "./AdditionalLibrary.sol";
 
 contract TheDAO {
     using ArraysPlus for address[];
@@ -45,6 +35,10 @@ contract TheDAO {
 
     function getMembersAmount() public view returns (uint amount) {
         amount = members.length;
+    }
+
+    function getVotingsAmount() public view returns (uint amount) {
+        amount = votingIds.length;
     }
 
     function createVoting(ActionType _actionType, address _target) public {
